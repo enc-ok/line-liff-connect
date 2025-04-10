@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>LINEアカウント連携</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    input {
+      font-size: 1.1rem;
+      padding: 0.4rem;
+      width: 150px;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+    #status {
+      margin-top: 1rem;
+      color: #444;
+      white-space: pre-wrap;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h2>LINEアカウント連携</h2>
+  <p>あなたのレコード番号を入力してください：</p>
+  <input id="recordId" type="text" placeholder="例：777" />
+  <br />
+  <button onclick="submit()">送信する</button>
+  <div id="status">🔄 初期化中...</div>
+
+  <script>
+    let liffReady = false;
+    let userId = "";
+
+    async function initializeLIFF() {
+      const status = document.getElementById("status");
+
+      try {
+        console.log("🔧 liff.init 開始");
+        status.textContent = "⏳ LIFF初期化中...";
+        await liff.init({ liffId: "2007233000-72erwlYp" }); // ← ご自身のLIFF IDに変更
+
+        console.log("✅ liff.init 成功");
+        status.textContent += "\n✅ LIFF初期化成功";
+
+        if (!liff.isLoggedIn()) {
+          console.log("🔁 ログイン開始");
+          liff.login({ redirectUri: location.href });
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        status.textContent += `\n👤 ログイン済み\n✅ userId取得: ${userId}`;
+        console.log("✅ userId: " + userId);
+
+        liffReady = true;
+      } catch (e) {
+        console.error("❌ LIFF初期化エラー: ", e);
+        status.textContent = "❌ LIFF初期化エラー: " + e.message;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initializeLIFF);
+
+    async function submit() {
+      const record = document.getElementById('recordId').value.trim();
+      const status = document.getElementById('status');
+
+      if (!liffReady) {
+        status.textContent += "\n❌ LIFF初期化がまだ完了していません。";
+        return;
+      }
+
+      if (!record || isNaN(record)) {
+        status.textContent += "\n❌ 有効なレコード番号を入力してください。";
+        return;
+      }
+
+      try {
+        status.textContent += `\n📨 送信中: record=${record}, userId=${userId}`;
+
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec'; // ← あなたのGAS URLに置き換えてください
+        const res = await fetch(`${gasUrl}?record=${record}&userId=${userId}`);
+        const result = await res.text();
+
+        status.textContent += `\n✅ 結果: ${result}`;
+      } catch (e) {
+        console.error("❌ 送信エラー:", e);
+        status.textContent += '\n❌ エラー発生：' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
