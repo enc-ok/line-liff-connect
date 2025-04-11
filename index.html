@@ -108,7 +108,7 @@
         status.textContent += `\n👤 userId取得: ${userId}`;
 
         // fetch送信
-        const gasUrl = 'https://script.google.com/macros/s/【GASのID】/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec';
         await fetch(`${gasUrl}?record=${record}&userId=${userId}`, {
           method: 'GET',
           mode: 'no-cors'
