@@ -85,7 +85,7 @@
 
       try {
         status.textContent = "⏳ LIFF ID取得中...";
-        const liffRes = await fetch(`https://script.google.com/macros/s/【GASのID】/exec?record=${record}&mode=liff`);
+        const liffRes = await fetch(`https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec`);
         const liffId = await liffRes.text();
 
         if (!liffId || liffId.includes("ERROR")) {
