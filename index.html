@@ -12,7 +12,7 @@
       font-size: 1.2rem;
       line-height: 1.6;
     }
-  
+
     input {
       font-size: 1.3rem;
       padding: 0.6rem;
@@ -22,7 +22,7 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
-  
+
     button {
       margin-top: 1.5rem;
       padding: 0.8rem 1.5rem;
@@ -33,11 +33,11 @@
       color: white;
       cursor: pointer;
     }
-  
+
     button:hover {
       background-color: #1f5ed6;
     }
-  
+
     #status {
       margin-top: 1.5rem;
       color: #444;
@@ -51,11 +51,12 @@
       margin-left: auto;
       margin-right: auto;
     }
-  
+
     @media screen and (max-width: 600px) {
       body {
         padding: 1rem;
       }
+
       input, button {
         width: 90%;
       }
@@ -84,8 +85,10 @@
       }
 
       try {
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec';
+
         status.textContent = "⏳ LIFF ID取得中...";
-        const liffRes = await fetch(`https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec`);
+        const liffRes = await fetch(`${gasUrl}?record=${record}&mode=liff`);
         const liffId = await liffRes.text();
 
         if (!liffId || liffId.includes("ERROR")) {
@@ -99,6 +102,7 @@
         liffReady = true;
 
         if (!liff.isLoggedIn()) {
+          status.textContent += "\n🔁 LIFFログインを開始します...";
           liff.login({ redirectUri: location.href });
           return;
         }
@@ -107,11 +111,10 @@
         userId = profile.userId;
         status.textContent += `\n👤 userId取得: ${userId}`;
 
-        // fetch送信
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec';
+        // fetch送信（KintoneへuserIdを保存）
         await fetch(`${gasUrl}?record=${record}&userId=${userId}`, {
           method: 'GET',
-          mode: 'no-cors'
+          mode: 'no-cors'  // レスポンスは取得できないが、リクエストは通る
         });
 
         status.textContent += `\n✅ 登録リクエストを送信しました`;
