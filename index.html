@@ -7,24 +7,58 @@
   <style>
     body {
       font-family: sans-serif;
-      padding: 2rem;
+      padding: 1.5rem;
       text-align: center;
+      font-size: 1.2rem;
+      line-height: 1.6;
     }
+  
     input {
-      font-size: 1.1rem;
-      padding: 0.4rem;
-      width: 150px;
+      font-size: 1.3rem;
+      padding: 0.6rem;
+      width: 80%;
+      max-width: 300px;
+      margin-top: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
+  
     button {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.3rem;
+      border-radius: 6px;
+      border: none;
+      background-color: #2b7cff;
+      color: white;
+      cursor: pointer;
     }
+  
+    button:hover {
+      background-color: #1f5ed6;
+    }
+  
     #status {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       color: #444;
       white-space: pre-wrap;
       text-align: left;
+      font-size: 1.1rem;
+      padding: 1rem;
+      background-color: #f3f3f3;
+      border-radius: 6px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  
+    @media screen and (max-width: 600px) {
+      body {
+        padding: 1rem;
+      }
+      input, button {
+        width: 90%;
+      }
     }
   </style>
 </head>
@@ -33,71 +67,58 @@
   <p>あなたのレコード番号を入力してください：</p>
   <input id="recordId" type="text" placeholder="例：778" />
   <br />
-  <button onclick="submit()">送信する</button>
-  <div id="status">🔄 初期化中...</div>
+  <button onclick="initializeAndSubmit()">送信する</button>
+  <div id="status">🔄 初期化待機中...</div>
 
   <script>
-    let liffReady = false;
     let userId = "";
+    let liffReady = false;
 
-    async function initializeLIFF() {
+    async function initializeAndSubmit() {
+      const record = document.getElementById("recordId").value.trim();
       const status = document.getElementById("status");
 
-      try {
-        status.textContent = "⏳ LIFF初期化中...";
-        await liff.init({ liffId: "2007233000-72erwlYp" }); // ← あなたのLIFF IDに変更
+      if (!record || isNaN(record)) {
+        status.textContent = "❌ 有効なレコード番号を入力してください。";
+        return;
+      }
 
-        status.textContent += "\n✅ LIFF初期化成功";
+      try {
+        status.textContent = "⏳ LIFF ID取得中...";
+        const liffRes = await fetch(`https://script.google.com/macros/s/【GASのID】/exec?record=${record}&mode=liff`);
+        const liffId = await liffRes.text();
+
+        if (!liffId || liffId.includes("ERROR")) {
+          status.textContent = "❌ LIFF IDの取得に失敗しました";
+          return;
+        }
+
+        status.textContent += `\n✅ LIFF ID: ${liffId}`;
+
+        await liff.init({ liffId });
+        liffReady = true;
 
         if (!liff.isLoggedIn()) {
-          status.textContent += "\n🔁 ログイン開始...";
           liff.login({ redirectUri: location.href });
           return;
         }
 
         const profile = await liff.getProfile();
         userId = profile.userId;
-        status.textContent += `\n👤 ログイン済み\n✅ userId取得: ${userId}`;
-        liffReady = true;
+        status.textContent += `\n👤 userId取得: ${userId}`;
 
-      } catch (e) {
-        console.error("❌ LIFF初期化エラー: ", e);
-        status.textContent = "❌ LIFF初期化エラー: " + e.message;
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", initializeLIFF);
-
-    async function submit() {
-      const record = document.getElementById('recordId').value.trim();
-      const status = document.getElementById('status');
-
-      if (!liffReady) {
-        status.textContent += "\n❌ LIFF初期化がまだ完了していません。";
-        return;
-      }
-
-      if (!record || isNaN(record)) {
-        status.textContent += "\n❌ 有効なレコード番号を入力してください。";
-        return;
-      }
-
-      try {
-        status.textContent += `\n📨 送信中: record=${record}, userId=${userId}`;
-
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzqEzc7CGIKIwXeLqa7HSOezKSeL2wSnOmFtQ7hAwZW1TMnlUtCgmnv7Nm-iDMWfinQ/exec'; // ← あなたの最新GASのURLに差し替え
-
-        // 🔧 no-corsテスト：レスポンスは取得できません
+        // fetch送信
+        const gasUrl = 'https://script.google.com/macros/s/【GASのID】/exec';
         await fetch(`${gasUrl}?record=${record}&userId=${userId}`, {
           method: 'GET',
           mode: 'no-cors'
         });
 
-        status.textContent += `\n✅ fetch送信完了（レスポンス取得不可）`;
+        status.textContent += `\n✅ 登録リクエストを送信しました`;
 
       } catch (e) {
-        console.error("❌ fetchエラー:", e);
-        status.textContent += '\n❌ エラー発生：' + e.message;
+        console.error(e);
+        status.textContent = "❌ エラー発生：" + e.message;
       }
     }
   </script>
